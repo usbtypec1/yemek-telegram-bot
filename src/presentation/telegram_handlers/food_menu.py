@@ -56,7 +56,7 @@ async def on_show_food_menu_for_specific_day_by_button(
     ):
         await food_menu_cleaner_queue.add(
             chat_id=callback_query.message.chat.id,
-            message_ids=[message.message_id for message in messages],
+            message_ids=[message.message_id for message in messages] + [callback_query.message.message_id],
         )
 
 
@@ -121,7 +121,7 @@ async def on_show_food_menu_for_specific_day_by_command(
     ):
         await food_menu_cleaner_queue.add(
             chat_id=message.chat.id,
-            message_ids=[message.message_id for message in messages],
+            message_ids=[message.message_id for message in messages] + [message.message_id],
         )
 
 
