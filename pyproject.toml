@@ -1,0 +1,19 @@
+[project]
+name = "yemek-bot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Eldos",email = "eldos.baktybekov@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram (>=3.17.0,<4.0.0)",
+    "redis (>=5.2.1,<6.0.0)",
+    "apscheduler (>=3.11.0,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
