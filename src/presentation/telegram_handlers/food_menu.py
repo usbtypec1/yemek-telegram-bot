@@ -4,7 +4,11 @@ from aiogram.filters import CommandStart, StateFilter, Command, and_f, or_f
 from aiogram.types import CallbackQuery, Message
 
 from presentation.ui.views.base import answer_media_group_view, answer_view
-from presentation.ui.views.food_menu import DailyFoodMenuView, FoodMenuHelpView
+from presentation.ui.views.food_menu import (
+    DailyFoodMenuView,
+    FoodMenuHelpView,
+    UserPrivateChatMenuView,
+)
 from presentation.callback_data.food_menu import FoodMenuCallbackData
 from application.interactors.food_menu_fetch import (
     FoodMenuFetchInteractor,
@@ -56,7 +60,8 @@ async def on_show_food_menu_for_specific_day_by_button(
     ):
         await food_menu_cleaner_queue.add(
             chat_id=callback_query.message.chat.id,
-            message_ids=[message.message_id for message in messages] + [callback_query.message.message_id],
+            message_ids=[message.message_id for message in messages]
+            + [callback_query.message.message_id],
         )
 
 
@@ -66,6 +71,7 @@ async def on_show_food_menu_for_specific_day_by_button(
         F.text.lower().startswith("yemek "),
         F.text.lower().startswith("емек "),
         F.text.lower().startswith("/yemek "),
+        F.text.in_(("🕕 Сегодня", "🕒 Завтра", "🕞 Послезавтра")),
     ),
     StateFilter("*"),
 )
@@ -74,28 +80,34 @@ async def on_show_food_menu_for_specific_day_by_command(
     food_menu_cache: FoodMenuCache,
     food_menu_cleaner_queue: FoodMenuCleanerQueue,
 ):
-    for command in ("йемек на", "йемек", "емек на", "емек", "yemek"):
-        if message.text.strip('/').lower().startswith(command):
-            days_to_skip = message.text.strip('/')[len(command) :].strip()
-            break
-    else:
-        return
-
     word_to_days_count = {
         "сегодня": 0,
         "завтра": 1,
         "послезавтра": 2,
         "today": 0,
         "tomorrow": 1,
+        "🕕 Сегодня": 0,
+        "🕒 Завтра": 1,
+        "🕞 Послезавтра": 2,
     }
 
-    if days_to_skip.isdigit():
-        days_to_skip = int(days_to_skip)
-    elif days_to_skip in word_to_days_count:
-        days_to_skip = word_to_days_count[days_to_skip]
+    if message.text in word_to_days_count:
+        days_to_skip = word_to_days_count[message.text]
     else:
-        await message.reply("Не могу распознать день 😔")
-        return
+        for command in ("йемек на", "йемек", "емек на", "емек", "yemek"):
+            if message.text.strip("/").lower().startswith(command):
+                days_to_skip = message.text.strip("/")[len(command) :].strip()
+                break
+        else:
+            return
+
+        if days_to_skip.isdigit():
+            days_to_skip = int(days_to_skip)
+        elif days_to_skip in word_to_days_count:
+            days_to_skip = word_to_days_count[days_to_skip]
+        else:
+            await message.reply("Не могу распознать день 😔")
+            return
 
     food_menu_fetch_interactor = FoodMenuFetchInteractor(cache=food_menu_cache)
     daily_food_menu_list = await food_menu_fetch_interactor.execute()
@@ -121,7 +133,8 @@ async def on_show_food_menu_for_specific_day_by_command(
     ):
         await food_menu_cleaner_queue.add(
             chat_id=message.chat.id,
-            message_ids=[message.message_id for message in messages] + [message.message_id],
+            message_ids=[message.message_id for message in messages]
+            + [message.message_id],
         )
 
 
@@ -137,4 +150,8 @@ async def on_show_food_menu_for_specific_day_by_command(
     StateFilter("*"),
 )
 async def on_show_food_menu_help(message: Message) -> None:
-    await answer_view(message, FoodMenuHelpView())
+    if message.chat.type == ChatType.PRIVATE:
+        view = UserPrivateChatMenuView()
+    else:
+        view = FoodMenuHelpView()
+    await answer_view(message, view)

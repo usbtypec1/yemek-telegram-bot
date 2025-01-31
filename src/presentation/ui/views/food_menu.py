@@ -2,6 +2,8 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     InputMediaPhoto,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
 )
 from aiogram.utils.media_group import MediaType
 
@@ -73,3 +75,38 @@ class DailyFoodMenuView(MediaGroupView):
 
         lines.append(f"\n🔥 <b>Сумма калорий: {total_calories_count}</b>")
         return "\n".join(lines)
+
+
+class UserPrivateChatMenuView(TextView):
+    text = (
+        "<b>🤤 Просмотр меню в йемекхане:</b>"
+        "\n\n🍏 На сегодня:"
+        "\n<code>йемек сегодня</code>"
+        "\n\n🍏 На завтра:"
+        "\n<code>йемек завтра</code>"
+        "\n\n<b>🧐 Так же можно просматривать на N дней вперёд:</b>"
+        "\n<code>• йемек {N}</code>"
+        "\n\nНапример👇"
+        "\n🍎 На послезавтра - йемек 2"
+        "\n🍎 10 дней вперёд - йемек 10"
+        "\n\n<b>👇 Так же можете посмотреть меню на веб странице:</b>"
+        "\nhttps://t.me/duck_duck_robot/yemek"
+    )
+    reply_markup = ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="🕕 Сегодня",
+                ),
+                KeyboardButton(
+                    text="🕒 Завтра",
+                ),
+            ],
+            [
+                KeyboardButton(
+                    text="🕞 Послезавтра",
+                ),
+            ],
+        ],
+    )
