@@ -1,8 +1,10 @@
+import sqlite3
 from aiogram import Router, F
 from aiogram.enums import ChatType
 from aiogram.filters import CommandStart, StateFilter, Command, and_f, or_f
 from aiogram.types import CallbackQuery, Message
 
+from infrastructure.usage_statistics import UsageStatisticsDao
 from presentation.ui.views.base import answer_media_group_view, answer_view
 from presentation.ui.views.food_menu import (
     DailyFoodMenuView,
@@ -16,11 +18,26 @@ from application.interactors.food_menu_fetch import (
 from application.interactors.food_menu_for_specific_day import (
     FoodMenuForSpecificDayPickInteractor,
 )
+from application.interactors.track_usage import TrackUsageInteractor
 from infrastructure.cache import FoodMenuCache
 from infrastructure.cleaner import FoodMenuCleanerQueue
 
 
 router = Router(name=__name__)
+
+
+@router.message(
+    Command("statistics"),
+    StateFilter("*"),
+)
+async def on_show_statistics(message: Message) -> None:
+    text = "Пользователь - количество"
+    with sqlite3.connect("./usage_statistics.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT user_id, COUNT(*) FROM usages GROUP BY user_id ORDER BY COUNT(*) DESC;")
+        for user_id, count in cursor.fetchall():
+            text += f"\n{user_id} - {count}"
+    await message.answer(text)
 
 
 @router.callback_query(
@@ -33,6 +50,10 @@ async def on_show_food_menu_for_specific_day_by_button(
     food_menu_cache: FoodMenuCache,
     food_menu_cleaner_queue: FoodMenuCleanerQueue,
 ) -> None:
+    message: Message = callback_query.message  # type: ignore
+    user_id = callback_query.message.from_user.id  # type: ignore
+    chat_id = callback_query.message.chat.id  # type: ignore
+
     food_menu_fetch_interactor = FoodMenuFetchInteractor(cache=food_menu_cache)
     daily_food_menu_list = await food_menu_fetch_interactor.execute()
 
@@ -51,18 +72,22 @@ async def on_show_food_menu_for_specific_day_by_button(
         return
 
     view = DailyFoodMenuView(daily_food_menu)
-    messages = await answer_media_group_view(callback_query.message, view)
-    await callback_query.message.delete()
+    messages = await answer_media_group_view(message, view)
+    await message.delete()
 
     if callback_query.message.chat.type in (
         ChatType.GROUP,
         ChatType.SUPERGROUP,
     ):
         await food_menu_cleaner_queue.add(
-            chat_id=callback_query.message.chat.id,
+            chat_id=chat_id,
             message_ids=[message.message_id for message in messages]
             + [callback_query.message.message_id],
         )
+    with sqlite3.connect("./usage_statistics.db") as connection:
+        dao = UsageStatisticsDao(connection=connection)
+        interactor = TrackUsageInteractor(usage_statistics_dao=dao)
+        interactor.execute(user_id=user_id, chat_id=chat_id)
 
 
 @router.message(
@@ -80,6 +105,10 @@ async def on_show_food_menu_for_specific_day_by_command(
     food_menu_cache: FoodMenuCache,
     food_menu_cleaner_queue: FoodMenuCleanerQueue,
 ):
+    user_id = message.from_user.id  # type: ignore
+    chat_id = message.chat.id  # type: ignore
+    message_text: str = message.text  # type: ignore
+
     word_to_days_count = {
         "сегодня": 0,
         "завтра": 1,
@@ -91,12 +120,12 @@ async def on_show_food_menu_for_specific_day_by_command(
         "🕞 Послезавтра": 2,
     }
 
-    if message.text in word_to_days_count:
-        days_to_skip = word_to_days_count[message.text]
+    if message_text in word_to_days_count:
+        days_to_skip = word_to_days_count[message_text]
     else:
         for command in ("йемек на", "йемек", "емек на", "емек", "yemek"):
-            if message.text.strip("/").lower().startswith(command):
-                days_to_skip = message.text.strip("/")[len(command) :].strip()
+            if message_text.strip("/").lower().startswith(command):
+                days_to_skip = message_text.strip("/")[len(command) :].strip()
                 break
         else:
             return
@@ -132,10 +161,15 @@ async def on_show_food_menu_for_specific_day_by_command(
         ChatType.SUPERGROUP,
     ):
         await food_menu_cleaner_queue.add(
-            chat_id=message.chat.id,
+            chat_id=chat_id,
             message_ids=[message.message_id for message in messages]
             + [message.message_id],
         )
+
+    with sqlite3.connect("./usage_statistics.db") as connection:
+        dao = UsageStatisticsDao(connection=connection)
+        interactor = TrackUsageInteractor(usage_statistics_dao=dao)
+        interactor.execute(user_id=user_id, chat_id=chat_id)
 
 
 @router.message(
