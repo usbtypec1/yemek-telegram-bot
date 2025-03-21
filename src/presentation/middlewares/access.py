@@ -18,14 +18,17 @@ class AccessMiddleware(BaseMiddleware):
         data: dict[str, Any],
     ):
         user_id: int | None = None
+        chat_id: int | None = None
         if event.message is not None:
             if event.message.from_user is not None:
                 user_id = event.message.from_user.id
+                chat_id = event.message.chat.id
         if event.callback_query is not None:
-            if event.callback_query.from_user is not None:
+            if event.callback_query.from_user is not None and event.callback_query.message is not None:
                 user_id = event.callback_query.from_user.id
+                chat_id = event.callback_query.message.chat.id
 
-        if user_id is None:
+        if user_id is None or chat_id is None:
             return await handler(event, data)
 
         bot: Bot = data["bot"]
@@ -38,8 +41,8 @@ class AccessMiddleware(BaseMiddleware):
             chat_member.status == ChatMemberStatus.LEFT
             or chat_member.status == ChatMemberStatus.KICKED
         ):
-            await bot.send_message(
-                chat_id=user_id,
+            r = await bot.send_message(
+                chat_id=chat_id,
                 text=self.__access_denied_text,
                 reply_markup=InlineKeyboardMarkup(
                     inline_keyboard=[
@@ -52,6 +55,7 @@ class AccessMiddleware(BaseMiddleware):
                     ]
                 ),
             )
+            print(r)
             return
 
         return await handler(event, data)
