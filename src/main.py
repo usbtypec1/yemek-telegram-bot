@@ -50,7 +50,7 @@ async def main() -> None:
     dispatcher["food_menu_cache"] = food_menu_cache
     dispatcher["food_menu_cleaner_queue"] = food_menu_cleaner_queue
 
-    dispatcher.update.outer_middleware(
+    dispatcher.update.middleware(
         AccessMiddleware(
             chat_id=config.access_chat_id,
             access_denied_text=config.access_denied_text,
