@@ -7,7 +7,8 @@ from aiogram.client.default import DefaultBotProperties
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from config import load_config_from_env
+from config import load_config_from_toml_file
+from presentation.middlewares.access import AccessMiddleware
 from presentation.telegram_handlers.food_menu import router
 from infrastructure.cache import FoodMenuCache
 from infrastructure.cleaner import FoodMenuCleanerQueue
@@ -16,7 +17,7 @@ from presentation.periodic_tasks.prefetch_food_menu import prefetch_food_menu
 
 
 async def main() -> None:
-    config = load_config_from_env()
+    config = load_config_from_toml_file()
 
     redis_client = redis.from_url(config.redis_url)
     food_menu_cache = FoodMenuCache(
@@ -34,13 +35,13 @@ async def main() -> None:
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
-        func=clear_messages, 
-        trigger=CronTrigger(minute='*/5'),
+        func=clear_messages,
+        trigger=CronTrigger(minute="*/5"),
         args=(bot, food_menu_cleaner_queue),
     )
     scheduler.add_job(
         func=prefetch_food_menu,
-        trigger=CronTrigger(minute='*/5'),
+        trigger=CronTrigger(minute="*/5"),
         args=(food_menu_cache,),
     )
     scheduler.start()
@@ -48,6 +49,13 @@ async def main() -> None:
     dispatcher = Dispatcher()
     dispatcher["food_menu_cache"] = food_menu_cache
     dispatcher["food_menu_cleaner_queue"] = food_menu_cleaner_queue
+
+    dispatcher.update.outer_middleware(
+        AccessMiddleware(
+            chat_id=config.access_chat_id,
+            access_denied_text=config.access_denied_text,
+        ),
+    )
 
     dispatcher.include_router(router)
 

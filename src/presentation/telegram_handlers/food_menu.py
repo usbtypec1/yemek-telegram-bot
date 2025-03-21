@@ -34,7 +34,9 @@ async def on_show_statistics(message: Message) -> None:
     text = "Пользователь - количество"
     with sqlite3.connect("./usage_statistics.db") as connection:
         cursor = connection.cursor()
-        cursor.execute("SELECT user_id, COUNT(*) FROM usages GROUP BY user_id ORDER BY COUNT(*) DESC;")
+        cursor.execute(
+            "SELECT user_id, COUNT(*) FROM usages GROUP BY user_id ORDER BY COUNT(*) DESC;"
+        )
         for user_id, count in cursor.fetchall():
             text += f"\n{user_id} - {count}"
     await message.answer(text)
@@ -170,6 +172,20 @@ async def on_show_food_menu_for_specific_day_by_command(
         dao = UsageStatisticsDao(connection=connection)
         interactor = TrackUsageInteractor(usage_statistics_dao=dao)
         interactor.execute(user_id=user_id, chat_id=chat_id)
+
+
+@router.callback_query(
+    F.data == "start",
+    StateFilter("*"),
+)
+async def on_start(callback_query: CallbackQuery) -> None:
+    if callback_query.message.chat.type == ChatType.PRIVATE:
+        view = UserPrivateChatMenuView()
+    else:
+        view = FoodMenuHelpView()
+    await answer_view(callback_query.message, view)
+    await callback_query.message.delete()
+    await callback_query.answer()
 
 
 @router.message(

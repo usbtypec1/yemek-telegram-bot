@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+config.toml
+
+**/.DS_Store
+
+usage_statistics.db
