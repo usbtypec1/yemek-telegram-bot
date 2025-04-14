@@ -55,6 +55,9 @@ async def on_show_food_menu_for_specific_day_by_button(
     message: Message = callback_query.message  # type: ignore
     user_id = callback_query.message.from_user.id  # type: ignore
     chat_id = callback_query.message.chat.id  # type: ignore
+    if message.chat.type != ChatType.PRIVATE:
+        await message.reply("❗️ Чтобы использовать бота, перейдите в ЛС: @yemek_manas_bot")
+        return
 
     food_menu_fetch_interactor = FoodMenuFetchInteractor(cache=food_menu_cache)
     daily_food_menu_list = await food_menu_fetch_interactor.execute()
@@ -107,6 +110,9 @@ async def on_show_food_menu_for_specific_day_by_command(
     food_menu_cache: FoodMenuCache,
     food_menu_cleaner_queue: FoodMenuCleanerQueue,
 ):
+    if message.chat.type != ChatType.PRIVATE:
+        await message.reply("❗️ Чтобы использовать бота, перейдите в ЛС: @yemek_manas_bot")
+        return
     user_id = message.from_user.id  # type: ignore
     chat_id = message.chat.id  # type: ignore
     message_text: str = message.text  # type: ignore
@@ -179,6 +185,9 @@ async def on_show_food_menu_for_specific_day_by_command(
     StateFilter("*"),
 )
 async def on_start(callback_query: CallbackQuery) -> None:
+    if message.chat.type != ChatType.PRIVATE:
+        await message.reply("❗️ Чтобы использовать бота, перейдите в ЛС: @yemek_manas_bot")
+        return
     if callback_query.message.chat.type == ChatType.PRIVATE:
         view = UserPrivateChatMenuView()
     else:
@@ -200,6 +209,9 @@ async def on_start(callback_query: CallbackQuery) -> None:
     StateFilter("*"),
 )
 async def on_show_food_menu_help(message: Message) -> None:
+    if message.chat.type != ChatType.PRIVATE:
+        await message.reply("❗️ Чтобы использовать бота, перейдите в ЛС: @yemek_manas_bot")
+        return
     if message.chat.type == ChatType.PRIVATE:
         view = UserPrivateChatMenuView()
     else:
