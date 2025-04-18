@@ -77,11 +77,13 @@ async def on_show_food_menu_for_specific_day_by_command(
         "tomorrow": 1,
     }
 
-    if command.args not in word_to_days_count:
+    if command.args in word_to_days_count:
+        days_to_skip = word_to_days_count[command.args]
+    elif command.args.isdigit():
+        days_to_skip = int(command.args)
+    else:
         await message.reply("Не могу распознать день 😔")
         return
-
-    days_to_skip = word_to_days_count[command.args]
 
     food_menu_fetch_interactor = FoodMenuFetchInteractor(cache=food_menu_cache)
     daily_food_menu_list = await food_menu_fetch_interactor.execute()
