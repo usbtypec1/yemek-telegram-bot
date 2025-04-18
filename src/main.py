@@ -7,9 +7,10 @@ from aiogram.client.default import DefaultBotProperties
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from presentation.middlewares.group_chat_warning import group_chat_warning_middleware
+import presentation.telegram_handlers
 from config import load_config_from_toml_file
 from presentation.middlewares.access import AccessMiddleware
-from presentation.telegram_handlers.food_menu import router
 from infrastructure.cache import FoodMenuCache
 from infrastructure.cleaner import FoodMenuCleanerQueue
 from presentation.periodic_tasks.clear_messages import clear_messages
@@ -49,7 +50,9 @@ async def main() -> None:
     dispatcher = Dispatcher()
     dispatcher["food_menu_cache"] = food_menu_cache
     dispatcher["food_menu_cleaner_queue"] = food_menu_cleaner_queue
-
+    dispatcher["bot_user"] = await bot.get_me()
+    
+    dispatcher.update.outer_middleware(group_chat_warning_middleware)
     dispatcher.update.middleware(
         AccessMiddleware(
             chat_id=config.access_chat_id,
@@ -57,7 +60,10 @@ async def main() -> None:
         ),
     )
 
-    dispatcher.include_router(router)
+    dispatcher.include_routers(
+        presentation.telegram_handlers.help.router,
+        presentation.telegram_handlers.food_menu.router,
+    )
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dispatcher.start_polling(bot)

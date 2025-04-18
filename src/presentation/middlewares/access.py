@@ -1,9 +1,14 @@
-from collections.abc import Callable, Awaitable
 from typing import Any
 
 from aiogram import BaseMiddleware, Bot
 from aiogram.types import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.enums import ChatMemberStatus, ChatType
+from aiogram.enums import ChatMemberStatus
+
+from presentation.middlewares.common import (
+    Handler,
+    get_chat_id,
+    get_user_id,
+)
 
 
 class AccessMiddleware(BaseMiddleware):
@@ -13,47 +18,21 @@ class AccessMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
+        handler: Handler,
         event: Update,
         data: dict[str, Any],
     ):
-        user_id: int | None = None
-        chat_id: int | None = None
-        message_text: str | None = None
-        chat_type: str | None = None
-        if event.message is not None:
-            if event.message.from_user is not None:
-                user_id = event.message.from_user.id
-                chat_id = event.message.chat.id
-                message_text = event.message.text
-                chat_type = event.message.chat.type
-        if event.callback_query is not None:
-            if (
-                event.callback_query.from_user is not None
-                and event.callback_query.message is not None
-            ):
-                user_id = event.callback_query.from_user.id
-                chat_id = event.callback_query.message.chat.id
-                chat_type = event.callback_query.message.chat.type
+        user_id = get_user_id(event)
+        chat_id = get_chat_id(event)
 
         if user_id is None or chat_id is None:
             return await handler(event, data)
 
         bot: Bot = data["bot"]
 
-        if (
-            message_text is not None
-            and not message_text.startswith("/")
-            and chat_type
-            in (
-                ChatType.GROUP,
-                ChatType.SUPERGROUP,
-            )
-        ):
-            return await handler(event, data)
-
         chat_member = await bot.get_chat_member(
-            chat_id=self.__chat_id, user_id=user_id
+            chat_id=self.__chat_id,
+            user_id=user_id,
         )
 
         if (

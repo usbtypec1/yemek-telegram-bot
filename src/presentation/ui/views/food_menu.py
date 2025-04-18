@@ -1,6 +1,4 @@
 from aiogram.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
     InputMediaPhoto,
     ReplyKeyboardMarkup,
     KeyboardButton,
@@ -8,46 +6,8 @@ from aiogram.types import (
 from aiogram.utils.media_group import MediaType
 
 from presentation.ui.views.base import MediaGroupView, TextView
-from presentation.callback_data.food_menu import FoodMenuCallbackData
 from domain.entities import DailyFoodMenu
 from domain.services.date import get_weekday_name
-
-
-class FoodMenuHelpView(TextView):
-    text = (
-        "<b>🤤 Просмотр меню в йемекхане:</b>"
-        "\n\n🍏 На сегодня:"
-        "\n<code>йемек сегодня</code>"
-        "\n\n🍏 На завтра:"
-        "\n<code>йемек завтра</code>"
-        "\n\n<b>🧐 Так же можно просматривать на N дней вперёд:</b>"
-        "\n<code>• йемек {N}</code>"
-        "\n\nНапример👇"
-        "\n🍎 На послезавтра - йемек 2"
-        "\n🍎 10 дней вперёд - йемек 10"
-        "\n\n<b>👇 Так же можете посмотреть меню на веб странице:</b>"
-        "\nhttps://t.me/duck_duck_robot/yemek"
-    )
-    reply_markup = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="🕕 Сегодня",
-                    callback_data=FoodMenuCallbackData(days_to_skip=0).pack(),
-                ),
-                InlineKeyboardButton(
-                    text="🕒 Завтра",
-                    callback_data=FoodMenuCallbackData(days_to_skip=1).pack(),
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🕞 Послезавтра",
-                    callback_data=FoodMenuCallbackData(days_to_skip=2).pack(),
-                ),
-            ],
-        ]
-    )
 
 
 class DailyFoodMenuView(MediaGroupView):
