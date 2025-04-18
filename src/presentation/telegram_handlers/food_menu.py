@@ -17,7 +17,6 @@ from application.interactors.food_menu_for_specific_day import (
 )
 from application.interactors.track_usage import TrackUsageInteractor
 from infrastructure.cache import FoodMenuCache
-from infrastructure.cleaner import FoodMenuCleanerQueue
 
 
 router = Router(name=__name__)
@@ -29,7 +28,6 @@ router = Router(name=__name__)
 async def on_show_food_menu_for_specific_day(
     message: Message,
     food_menu_cache: FoodMenuCache,
-    food_menu_cleaner_queue: FoodMenuCleanerQueue,
 ):
     word_to_days_count = {
         "🕕 Сегодня": 0,
@@ -37,6 +35,7 @@ async def on_show_food_menu_for_specific_day(
         "🕞 Послезавтра": 2,
     }
     days_to_skip: int = word_to_days_count[message.text]  # type: ignore
+
     food_menu_fetch_interactor = FoodMenuFetchInteractor(cache=food_menu_cache)
     daily_food_menu_list = await food_menu_fetch_interactor.execute()
 
