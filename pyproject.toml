@@ -9,6 +9,5 @@ dependencies = [
     "apscheduler>=3.11.0",
     "dishka>=1.5.3",
     "psycopg[binary]>=3.2.6",
-    "redis>=5.2.1",
     "sqlalchemy[asyncio]>=2.0.40",
 ]
