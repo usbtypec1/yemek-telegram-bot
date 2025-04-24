@@ -9,11 +9,8 @@ from infrastructure.sqla_persistence.models.usage import Usage
 class TelemetryGateway:
     session: AsyncSession
 
-    async def create_usage_record(self, *, user_id: int, chat_id: int) -> None:
-        usage = Usage(
-            user_id=user_id,
-            chat_id=chat_id,
-        )
+    async def create_usage_record(self, *, user_id: int) -> None:
+        usage = Usage(user_id=user_id)
         async with self.session.begin():
             self.session.add(usage)
             await self.session.commit()

@@ -28,7 +28,6 @@ async def on_show_food_menu_for_specific_day(
     telemetry_gateway: FromDishka[TelemetryGateway],
 ):
     user_id = message.from_user.id  # type: ignore
-    chat_id = message.chat.id  # type: ignore
 
     word_to_days_count = {
         "🕕 Сегодня": 0,
@@ -52,7 +51,6 @@ async def on_show_food_menu_for_specific_day(
     await TrackUsageInteractor(
         telemetry_gateway=telemetry_gateway,
         user_id=user_id,
-        chat_id=chat_id,
     ).execute()
 
 
@@ -66,7 +64,6 @@ async def on_show_food_menu_for_specific_day_by_command(
     telemetry_gateway: FromDishka[TelemetryGateway],
 ):
     user_id = message.from_user.id  # type: ignore
-    chat_id = message.chat.id  # type: ignore
 
     if not command.args:
         view = UserPrivateChatMenuView()
@@ -101,5 +98,4 @@ async def on_show_food_menu_for_specific_day_by_command(
     await TrackUsageInteractor(
         telemetry_gateway=telemetry_gateway,
         user_id=user_id,
-        chat_id=chat_id,
     ).execute()
