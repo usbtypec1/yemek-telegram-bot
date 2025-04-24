@@ -11,7 +11,7 @@ def parse_food_menu_response_data(
     return type_adapter.validate_python(response_data)
 
 
-async def get_food_menu() -> list[DailyFoodMenu]:
+async def get_food_menu_from_api() -> list[DailyFoodMenu]:
     async with aiohttp.ClientSession() as http_client:
         async with http_client.get("https://yemek-api.vercel.app/") as response:
             response_data = await response.json()
