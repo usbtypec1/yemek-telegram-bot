@@ -27,7 +27,8 @@ class SQLAlchemyPersistenceInfrastructureProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def provide_async_session_maker(
-        self, engine: AsyncEngine
+        self,
+        engine: AsyncEngine,
     ) -> async_sessionmaker[AsyncSession]:
         return async_sessionmaker(
             bind=engine,

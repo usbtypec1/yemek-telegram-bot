@@ -4,6 +4,7 @@ from aiogram.types import Message
 from dishka import FromDishka
 
 from infrastructure.adapters.food_menu_items import FoodMenuItemGateway
+from infrastructure.adapters.telemetry import TelemetryGateway
 from presentation.ui.views.base import answer_media_group_view, answer_view
 from presentation.ui.views.food_menu import (
     DailyFoodMenuView,
@@ -24,14 +25,18 @@ router = Router(name=__name__)
 async def on_show_food_menu_for_specific_day(
     message: Message,
     food_menu_item_gateway: FromDishka[FoodMenuItemGateway],
+    telemetry_gateway: FromDishka[TelemetryGateway],
 ):
+    user_id = message.from_user.id  # type: ignore
+    chat_id = message.chat.id  # type: ignore
+
     word_to_days_count = {
         "🕕 Сегодня": 0,
         "🕒 Завтра": 1,
         "🕞 Послезавтра": 2,
     }
     days_to_skip: int = word_to_days_count[message.text]  # type: ignore
-
+    
     daily_food_menu = await FoodMenuForSpecificDayPickInteractor(
         food_menu_item_gateway=food_menu_item_gateway,
         days_to_skip=days_to_skip,
@@ -44,6 +49,12 @@ async def on_show_food_menu_for_specific_day(
     view = DailyFoodMenuView(daily_food_menu)
     await answer_media_group_view(message, view)
 
+    await TrackUsageInteractor(
+        telemetry_gateway=telemetry_gateway,
+        user_id=user_id,
+        chat_id=chat_id,
+    ).execute()
+
 
 @router.message(
     Command("yemek"),
@@ -52,6 +63,7 @@ async def on_show_food_menu_for_specific_day_by_command(
     message: Message,
     command: CommandObject,
     food_menu_item_gateway: FromDishka[FoodMenuItemGateway],
+    telemetry_gateway: FromDishka[TelemetryGateway],
 ):
     user_id = message.from_user.id  # type: ignore
     chat_id = message.chat.id  # type: ignore
@@ -73,7 +85,7 @@ async def on_show_food_menu_for_specific_day_by_command(
     else:
         await message.reply("Не могу распознать день 😔")
         return
-    
+
     daily_food_menu = await FoodMenuForSpecificDayPickInteractor(
         food_menu_item_gateway=food_menu_item_gateway,
         days_to_skip=days_to_skip,
@@ -85,3 +97,9 @@ async def on_show_food_menu_for_specific_day_by_command(
 
     view = DailyFoodMenuView(daily_food_menu)
     await answer_media_group_view(message, view)
+
+    await TrackUsageInteractor(
+        telemetry_gateway=telemetry_gateway,
+        user_id=user_id,
+        chat_id=chat_id,
+    ).execute()

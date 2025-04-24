@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.enums import ChatType
 from aiogram.types import CallbackQuery, Message
-from aiogram.filters import CommandStart, Command, or_f
+from aiogram.filters import CommandStart, or_f
 
 from presentation.ui.views.base import answer_view
 from presentation.ui.views.food_menu import (

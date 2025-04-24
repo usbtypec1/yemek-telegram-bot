@@ -76,10 +76,11 @@ class FoodMenuItemGateway:
     ) -> DailyFoodMenu:
         statement = select(FoodMenuItemModel).where(
             FoodMenuItemModel.date == date,
-            FoodMenuItemModel.is_active == True,
+            FoodMenuItemModel.is_active,
         )
         food_menu_items = await self.session.scalars(statement)
-
+        await self.session.commit()
+        
         items: list[FoodMenuItem] = []
         for food_menu_item in food_menu_items:
             items.append(

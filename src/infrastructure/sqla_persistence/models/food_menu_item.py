@@ -14,6 +14,8 @@ class FoodMenuItem(Base):
     photo_url: Mapped[str]
     date: Mapped[datetime.date] = mapped_column(primary_key=True)
     is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     def __repr__(self) -> str:
         return f"FoodMenuItem(name={self.name}, price={self.calories_count}, photo_url={self.photo_url}, date={self.date})"
